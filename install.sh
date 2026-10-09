@@ -1,11 +1,11 @@
 #!/bin/sh
 # yeetdrop installer: fetch the release binary, then run `yeetdrop setup`.
 #   curl -fsSL https://raw.githubusercontent.com/teddytennant/yeetdrop/main/install.sh | sh
-# Env: OPENDROP_VERSION=v0.1.0  pin a release   OPENDROP_BIN=dir  install location
+# Env: YEETDROP_VERSION=v0.1.0  pin a release   YEETDROP_BIN=dir  install location
 set -eu
 
 REPO=teddytennant/yeetdrop
-BIN=${OPENDROP_BIN:-$HOME/.local/bin}
+BIN=${YEETDROP_BIN:-$HOME/.local/bin}
 
 [ "$(uname -s)" = Linux ] || { echo "yeetdrop only runs on Linux" >&2; exit 1; }
 case "$(uname -m)" in
@@ -15,8 +15,8 @@ case "$(uname -m)" in
 esac
 
 file="yeetdrop-$arch-linux.tar.gz"
-if [ -n "${OPENDROP_VERSION:-}" ]; then
-  base="https://github.com/$REPO/releases/download/$OPENDROP_VERSION"
+if [ -n "${YEETDROP_VERSION:-}" ]; then
+  base="https://github.com/$REPO/releases/download/$YEETDROP_VERSION"
 else
   base="https://github.com/$REPO/releases/latest/download"
 fi
@@ -40,7 +40,7 @@ case ":$PATH:" in
 esac
 
 # stdin is the script when piped, so ask the terminal directly.
-if [ -r /dev/tty ]; then
+if ( : </dev/tty ) 2>/dev/null; then
   exec "$BIN/yeetdrop" setup </dev/tty
 fi
 echo "run: $BIN/yeetdrop setup"
