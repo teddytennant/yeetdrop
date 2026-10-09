@@ -1,0 +1,12 @@
+#!/bin/sh
+# Peer-table shim for send-to-peer, which calls `omdrop-discoverable peers`
+# through pkexec. Read-only on purpose: root runs this, so it must not run
+# anything a user can write. Everything else goes through `yeetdrop`.
+[ "$1" = peers ] || { echo "omdrop-discoverable: only 'peers' is supported; use yeetdrop" >&2; exit 2; }
+[ -r /run/yeetdrop/owl.log ] || { echo "no radio window is open" >&2; exit 4; }
+grep -oE '(add|remove) peer [0-9a-f:]+' /run/yeetdrop/owl.log | awk '
+  { n = split($3, o, ":"); mac = ""
+    for (i = 1; i <= n; i++) mac = mac (i > 1 ? ":" : "") sprintf("%02s", o[i])
+    gsub(/ /, "0", mac)
+    if ($1 == "add") seen[mac] = 1; else delete seen[mac] }
+  END { for (m in seen) print m " rssi=?" }'

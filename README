@@ -1,0 +1,88 @@
+yeetdrop
+========
+
+AirDrop, on Linux. Your iPhone sends a photo, your laptop gets a photo.
+Apple did not ask for this.
+
+    curl -fsSL https://raw.githubusercontent.com/teddytennant/yeetdrop/main/install.sh | sh
+
+That grabs the binary from GitHub Releases, then runs `yeetdrop setup`,
+which installs packages, builds OWL, and puts everything where it goes,
+with progress bars, like a civilised program.
+
+Use it
+------
+
+    yeetdrop on              become discoverable, receive files. Ctrl-C to quit
+    yeetdrop on -t 2h        stay up for 2 hours (also: 90s, forever)
+    yeetdrop send cat.jpg    send to whatever is nearby
+    yeetdrop send --to AA:BB:CC:DD:EE:FF a.pdf b.pdf
+    yeetdrop peers           what can we hear
+    yeetdrop status          are we visible
+    yeetdrop off             close the window from another terminal
+    yeetdrop doctor          why is nothing working
+
+On the phone: AirDrop -> Everyone for 10 Minutes. Yes, Apple made you do
+that. Received files land in ~/Downloads.
+
+Need
+----
+
+ - A Linux box with a MediaTek MT7925 (Framework 13 and friends). It is
+   the only card anyone has tested. Others: `yeetdrop setup --allow-untested`
+   and tell us how it went.
+ - Your access point on channel 6, 44 or 149. AWDL shares the channel so
+   Wi-Fi stays connected. `yeetdrop doctor` will tell you if you're not.
+ - Bluetooth on (it pokes the phone awake).
+ - apt, pacman or dnf. Setup handles the rest.
+
+How
+---
+
+Apple's AWDL runs in userspace through OWL on a monitor interface next to
+your normal Wi-Fi. The AirDrop protocol (/Discover, /Ask, /Upload over TLS)
+comes from the omdrop projects. yeetdrop is the part that wasn't there:
+one Rust binary that sets it all up, runs the radio with a single teardown
+path instead of a bash script, and doesn't make you read a PKGBUILD.
+
+setup fetches pinned commits (nothing vendored), applies two small patches
+to OWL, and installs root-owned into /usr/lib/yeetdrop. Nothing runs until
+you say `on`.
+
+Known problems
+--------------
+
+ - Deleting a monitor interface can wedge the MT7925's receive path, so
+   teardown forces a reconnect. Wi-Fi blips for a second when you stop.
+ - Sending is slower than receiving (~0.5 MB/s vs ~1.3 MB/s).
+ - iPhones randomise their AWDL address. Devices show as MACs, not names.
+ - The Rust supervisor is new. The stack under it is not, but expect bugs.
+
+Build it yourself
+-----------------
+
+    cargo build --release
+    ./target/release/yeetdrop setup
+
+Credit
+------
+
+This exists because of https://github.com/t4t5/omdrop-owl, which got
+AirDrop working on the MT7925 and wrote the hard parts down. The radio
+approach, the OWL patches, the hardware notes and the MT7925 teardown fix
+are all theirs. yeetdrop is that idea with a nicer front door.
+
+Standing on:
+
+ - OWL (seemoo-lab), via the jedbillyb/owl fork   github.com/jedbillyb/owl
+ - omdrop-awdl, sender and BLE wake               github.com/brentkearney/omdrop-awdl
+ - omdrop-plugin, the receiver                    github.com/brentkearney/omdrop-plugin
+ - OpenDrop (seemoo-lab), which reverse engineered AirDrop first.
+   Different project, same itch. Go look at theirs too.
+                                                  github.com/seemoo-lab/opendrop
+
+Licence
+-------
+
+GPL-3.0-or-later. See LICENSE. Fetched components keep their own licences;
+setup installs copies into /usr/lib/yeetdrop/licenses.

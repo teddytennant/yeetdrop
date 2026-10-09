@@ -1,0 +1,33 @@
+name: release
+
+# Push a tag like v0.1.0 and binaries appear on the Releases page.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          # Oldest runners we can get, so the binary runs on older glibc.
+          - { arch: x86_64,  os: ubuntu-22.04 }
+          - { arch: aarch64, os: ubuntu-22.04-arm }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo build --release --locked
+      - name: package
+        run: |
+          name=yeetdrop-${{ matrix.arch }}-linux.tar.gz
+          tar -czf "$name" -C target/release yeetdrop
+          sha256sum "$name" > "$name.sha256"
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            yeetdrop-${{ matrix.arch }}-linux.tar.gz
+            yeetdrop-${{ matrix.arch }}-linux.tar.gz.sha256
+          generate_release_notes: true
